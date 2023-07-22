@@ -1,0 +1,25 @@
+[package]
+name = "clover_rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde_json = "1.0.103"
+serde = "1.0.174"
+log = "0.4.19"
+env_logger = "0.10.0"
+chrono = "0.4.26"
+
+
+
+[dependencies.serenity]
+version = "0.11.6"
+default-features = false
+features = ["rustls_backend", "client", "gateway", "model"]
+
+
+[dependencies.tokio] 
+version = "1.29.1"
+features =  ["macros", "rt-multi-thread"]
