@@ -19,20 +19,27 @@ impl EventHandler for Handler {
     async fn interaction_create(&self, _ctx: Context, _interaction: Interaction) {}
 
     async fn message(&self, _ctx: Context, _new_message: Message) {
+        log::debug!("recieved message - {}", _new_message.content);
+
         match self.bot_config.catify_id {
-            Some(_) => self.catify(&_ctx, &_new_message),
+            Some(_) => self.catify(&_ctx, &_new_message).await,
             None => (),
         }
     }
 }
 
 impl Handler {
-    fn catify(&self, _ctx: &Context, _new_message: &Message) {
+    async fn catify(&self, _ctx: &Context, message: &Message) {
         let r_id = self.bot_config.catify_id.as_ref().unwrap();
+        log::debug!("running catify on user_id {}", message.author.name);
 
-        match _new_message.guild_id {
-            Some(g_id) => todo!(),
-            None => (),
+        let g_id = match message.guild_id {
+            Some(g_id) => g_id,
+            None => return,
+        };
+        let target = match g_id.member(&_ctx.http, message.author.id).await {
+            Ok(urs) => urs,
+            Err(_) => return,
         };
     }
 }

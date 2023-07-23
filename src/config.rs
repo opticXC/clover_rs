@@ -3,13 +3,13 @@ use std::io::{Read, Write};
 use serde::{Deserialize, Serialize};
 
 use log;
-use serenity::model::prelude::GuildId;
+use serenity::model::prelude::{GuildId, RoleId};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BotConfig {
     bot_login_token: String,
     pub guild_id: GuildId,
-    pub catify_id: Option<String>,
+    pub catify_id: Option<RoleId>,
 }
 impl Default for BotConfig {
     fn default() -> Self {

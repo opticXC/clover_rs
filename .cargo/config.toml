@@ -1,0 +1,15 @@
+
+
+
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C" , "target-feature=+crt-static"]
+
+
+[profile.dev]
+opt-level = 0
+debug = true
+debug-assertions = true
+
+[env]
+RUST_BACKTRACE= "full"
