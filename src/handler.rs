@@ -5,41 +5,59 @@ use serenity::{
 };
 
 use crate::config::BotConfig;
+use crate::modules::BotModule;
 
+#[derive()]
 pub struct Handler {
     pub bot_config: BotConfig,
+    pub modules: Vec<BotModule>,
 }
 
 #[async_trait]
+
 impl EventHandler for Handler {
-    async fn ready(&self, _ctx: Context, _data_about_bot: Ready) {
-        log::info!("Logged in as {}", _data_about_bot.user.name);
+    async fn message(&self, ctx: Context, message: Message) {
+        log::info!("recieved message - {}", message.id.0);
+        if message.author.bot {
+            return;
+        }
+
+        for module in self.modules.iter() {
+            module.message(&self.bot_config, &ctx, &message).await;
+        }
     }
 
-    async fn interaction_create(&self, _ctx: Context, _interaction: Interaction) {}
+    async fn ready(&self, ctx: Context, ready: Ready) {
+        log::info!("Logged in as {}", ready.user.name);
 
-    async fn message(&self, _ctx: Context, _new_message: Message) {
-        log::debug!("recieved message - {}", _new_message.content);
+        log::info!("Resetting Application Commands");
+        for cmd in self
+            .bot_config
+            .guild_id
+            .get_application_commands(&ctx.http)
+            .await
+            .unwrap()
+            .iter()
+        {
+            self.bot_config
+                .guild_id
+                .delete_application_command(&ctx.http, cmd.id)
+                .await
+                .unwrap();
+        }
 
-        match self.bot_config.catify_id {
-            Some(_) => self.catify(&_ctx, &_new_message).await,
-            None => (),
+        for module in self.modules.iter() {
+            module.ready(&self.bot_config, &ctx, &ready).await;
+        }
+    }
+
+    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+        for module in self.modules.iter() {
+            module
+                .interaction_create(&self.bot_config, &ctx, &interaction)
+                .await
         }
     }
 }
 
-impl Handler {
-    async fn catify(&self, _ctx: &Context, message: &Message) {
-        let r_id = self.bot_config.catify_id.as_ref().unwrap();
-        log::debug!("running catify on user_id {}", message.author.name);
-
-        let g_id = match message.guild_id {
-            Some(g_id) => g_id,
-            None => return,
-        };
-        let target = match g_id.member(&_ctx.http, message.author.id).await {
-            Ok(urs) => urs,
-            Err(_) => return,
-        };
-    }
-}
+impl Handler {}

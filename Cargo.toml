@@ -12,15 +12,21 @@ log = "0.4.19"
 env_logger = "0.10.0"
 chrono = "0.4.26"
 color-eyre = "0.6.2"
+time = "0.2.23"
+
 
 
 
 [dependencies.serenity]
 version = "0.11.6"
 default-features = false
-features = ["rustls_backend", "client", "gateway", "model"]
+features = ["rustls_backend", "client", "gateway", "model" , "utils"]
 
 
 [dependencies.tokio] 
 version = "1.29.1"
 features =  ["macros", "rt-multi-thread"]
+
+[dependencies.reqwest]
+version = "0.11.18"
+features = ["json"]

@@ -1,14 +1,17 @@
-pub mod commands;
 pub mod commons;
 pub mod config;
 pub mod handler;
 
-use std::io::Write;
+pub mod modules;
+pub mod types;
+
+use std::{io::Write, sync::Arc};
 
 use config::BotConfig;
 use env_logger;
 use handler::Handler;
 use log::info;
+use modules::BotModule;
 use serenity::prelude::*;
 
 use color_eyre::eyre::Result;
@@ -16,13 +19,12 @@ use color_eyre::eyre::Result;
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-
     init_logger();
 
     let file_path = std::path::Path::new("./config.json");
     let bot_config = match BotConfig::load_from_path(file_path) {
         Ok(b_c) => b_c,
-        Err(why) => {
+        Err(_) => {
             info!(
                 "Creating default config at {:?} -- Remember to Fill it first before running",
                 file_path.as_os_str()
@@ -32,13 +34,22 @@ async fn main() -> Result<()> {
         }
     };
 
+    let modules: Vec<BotModule> = vec![
+        Arc::new(crate::modules::catify::Mod),
+        Arc::new(crate::modules::bot_utils::Mod),
+        Arc::new(crate::modules::fun::Mod),
+    ];
+
     let intents = GatewayIntents::non_privileged()
         | GatewayIntents::GUILDS
         | GatewayIntents::MESSAGE_CONTENT
         | GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::GUILD_MEMBERS;
     let mut client = Client::builder(bot_config.get_bot_login_token(), intents)
-        .event_handler(Handler { bot_config })
+        .event_handler(Handler {
+            bot_config,
+            modules,
+        })
         .await
         .expect("Error creating client");
 
