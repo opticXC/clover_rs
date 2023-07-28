@@ -1,19 +1,19 @@
-
-
-
-
-[target.x86_64-pc-windows-msvc]
+[build]
 rustflags = ["-C" , "target-feature=+crt-static"]
-
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-C" , "target-feature=+crt-static"]
-
-
+linker = "rust-lld"
 
 [profile.dev]
 opt-level = 0
 debug = true
 debug-assertions = true
 
+
+[profile.release]
+opt-level = 3
+debug = false
+debug-assertions = false
+
+
 [env]
 RUST_BACKTRACE= "full"
+

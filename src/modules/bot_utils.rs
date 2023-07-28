@@ -26,7 +26,7 @@ impl ModuleTrait for Mod {
         }
     }
 
-    async fn ready(&self, config: &BotConfig, ctx: &Context, ready: &Ready) {
+    async fn ready(&self, config: &BotConfig, ctx: &Context, _ready: &Ready) {
         log::info!("Setting up Module bot_utils");
 
         let g_id = config.guild_id;
@@ -62,7 +62,3 @@ async fn ping(ctx: &Context, command: &ApplicationCommandInteraction) {
         .await
         .unwrap();
 }
-
-
-const CLEAR:str =  "123123";
-

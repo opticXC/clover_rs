@@ -38,6 +38,7 @@ async fn main() -> Result<()> {
         Arc::new(crate::modules::catify::Mod),
         Arc::new(crate::modules::bot_utils::Mod),
         Arc::new(crate::modules::fun::Mod),
+        Arc::new(crate::modules::dictionary::Mod),
     ];
 
     let intents = GatewayIntents::non_privileged()

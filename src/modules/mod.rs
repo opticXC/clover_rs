@@ -1,5 +1,6 @@
 pub mod bot_utils;
 pub mod catify;
+pub mod dictionary;
 pub mod fun;
 
 use std::sync::Arc;

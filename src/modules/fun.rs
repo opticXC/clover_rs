@@ -3,7 +3,7 @@ use serenity::{
     builder::CreateEmbed,
     model::prelude::{
         application_command::ApplicationCommandInteraction, Interaction, InteractionResponseType,
-        Ready, ReadyEvent,
+        Ready,
     },
     prelude::Context,
 };
@@ -59,6 +59,15 @@ impl ModuleTrait for Mod {
     }
 }
 
+// FACT
+async fn get_fact() -> Fact {
+    let res = reqwest::get("https://uselessfacts.jsph.pl/api/v2/facts/random?language=en")
+        .await
+        .unwrap();
+
+    res.json::<Fact>().await.unwrap()
+}
+
 async fn fact(ctx: &Context, command: &ApplicationCommandInteraction) {
     let _ = command
         .create_interaction_response(&ctx, |response| {
@@ -83,13 +92,7 @@ async fn fact(ctx: &Context, command: &ApplicationCommandInteraction) {
         .unwrap();
 }
 
-async fn get_fact() -> Fact {
-    let res = reqwest::get("https://uselessfacts.jsph.pl/api/v2/facts/random?language=en")
-        .await
-        .unwrap();
-
-    res.json::<Fact>().await.unwrap()
-}
+// END FACT
 
 pub async fn animal_images(ctx: &Context, command: &ApplicationCommandInteraction) {
     command
@@ -120,27 +123,14 @@ pub async fn animal_images(ctx: &Context, command: &ApplicationCommandInteractio
         .unwrap();
 }
 
-const BASE_SHIBE_API_URL: &str = "http://shibe.online/api";
+const BASE_SHIBE_API_URL: &str = "http://shibe.online/api/";
 
 async fn get_animal_image(image_type: &String, count: i8) -> ImageResult {
-    let fetch_url = format!("{}/{}?count={}", BASE_SHIBE_API_URL, image_type, count);
-    println!("{}", fetch_url);
+    let fetch_url = format!("{}{}?count={}", BASE_SHIBE_API_URL, image_type, count);
+    log::debug!("Fetching url - {} ", fetch_url);
 
     let res = reqwest::get(fetch_url).await.unwrap();
     res.json::<ImageResult>().await.unwrap()
 }
 
 type ImageResult = Vec<String>;
-
-#[cfg(test)]
-mod tests {
-    use super::get_animal_image;
-
-    #[test]
-    fn test_animal_image() {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let t = String::from("shibes");
-        let res = rt.block_on(get_animal_image(&t, 1));
-        println!("{:?}", res);
-    }
-}
