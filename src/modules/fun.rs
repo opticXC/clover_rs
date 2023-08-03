@@ -8,17 +8,19 @@ use serenity::{
     prelude::Context,
 };
 
-use crate::{config::BotConfig, types::Fact};
+use crate::{config::BotConfig, commons};
 
 use super::ModuleTrait;
 
+
+#[derive(Debug)]
 pub struct Mod;
 
 #[async_trait]
 impl ModuleTrait for Mod {
     async fn interaction_create(
         &self,
-        config: &BotConfig,
+        _config: &BotConfig,
         ctx: &Context,
         interaction: &Interaction,
     ) {
@@ -26,7 +28,7 @@ impl ModuleTrait for Mod {
             match command.data.name.as_str() {
                 "fact" => fact(&ctx, &command).await,
                 "images" => animal_images(&ctx, &command).await,
-                _ => return,
+                _ => return 
             }
         }
     }
@@ -59,15 +61,6 @@ impl ModuleTrait for Mod {
     }
 }
 
-// FACT
-async fn get_fact() -> Fact {
-    let res = reqwest::get("https://uselessfacts.jsph.pl/api/v2/facts/random?language=en")
-        .await
-        .unwrap();
-
-    res.json::<Fact>().await.unwrap()
-}
-
 async fn fact(ctx: &Context, command: &ApplicationCommandInteraction) {
     let _ = command
         .create_interaction_response(&ctx, |response| {
@@ -78,7 +71,7 @@ async fn fact(ctx: &Context, command: &ApplicationCommandInteraction) {
         .await
         .unwrap();
 
-    let fact = get_fact().await;
+    let fact = commons::webapis::get_fact().await;
     command
         .edit_original_interaction_response(&ctx, |response| {
             let mut embed: CreateEmbed = CreateEmbed::default();
@@ -92,9 +85,11 @@ async fn fact(ctx: &Context, command: &ApplicationCommandInteraction) {
         .unwrap();
 }
 
-// END FACT
 
-pub async fn animal_images(ctx: &Context, command: &ApplicationCommandInteraction) {
+
+
+
+async fn animal_images(ctx: &Context, command: &ApplicationCommandInteraction) {
     command
         .create_interaction_response(&ctx.http, |response| {
             response.interaction_response_data(|data| data.content("Fetching Image"))
@@ -113,7 +108,7 @@ pub async fn animal_images(ctx: &Context, command: &ApplicationCommandInteractio
 
     let mut embed = CreateEmbed::default();
 
-    let res = get_animal_image(&image_type, 1).await;
+    let res = commons::webapis::get_animal_image(&image_type, 1).await;
 
     embed.image(&res[0]);
 
@@ -122,15 +117,3 @@ pub async fn animal_images(ctx: &Context, command: &ApplicationCommandInteractio
         .await
         .unwrap();
 }
-
-const BASE_SHIBE_API_URL: &str = "http://shibe.online/api/";
-
-async fn get_animal_image(image_type: &String, count: i8) -> ImageResult {
-    let fetch_url = format!("{}{}?count={}", BASE_SHIBE_API_URL, image_type, count);
-    log::debug!("Fetching url - {} ", fetch_url);
-
-    let res = reqwest::get(fetch_url).await.unwrap();
-    res.json::<ImageResult>().await.unwrap()
-}
-
-type ImageResult = Vec<String>;

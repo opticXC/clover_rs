@@ -1,3 +1,6 @@
+pub mod webapis;
+
+
 use serenity::{
     model::prelude::application_command::ApplicationCommandInteraction, prelude::Context,
 };

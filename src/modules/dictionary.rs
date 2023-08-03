@@ -1,14 +1,14 @@
-use serde::{Deserialize, Serialize};
 
+
+use log::info;
 use serenity::model::prelude::{
     application_command::ApplicationCommandInteraction, Interaction, Ready,
 };
 use serenity::{async_trait, builder::CreateEmbed, prelude::Context};
-
-use crate::{commons::command_error, config::BotConfig};
-
+use crate::config::BotConfig;
 use super::ModuleTrait;
 
+use webster;
 pub struct Mod;
 
 #[async_trait]
@@ -29,6 +29,9 @@ impl ModuleTrait for Mod {
         })
         .await
         .unwrap();
+
+        info!("Decompressing Webster Dictionary");
+        webster::preload();
     }
 
     async fn interaction_create(
@@ -59,38 +62,20 @@ async fn dictionary_run(ctx: &Context, command: &ApplicationCommandInteraction) 
         })
         .await
         .unwrap();
-
-    let word_res = match get_word(&word).await {
-        Ok(res) => res,
-        Err(_why) => {
-            log::error!("{}", _why);
-            command_error(&ctx, &command).await;
+    let def = match webster::dictionary(&word){
+        Some(d) => d,
+        None => {
+            command.edit_original_interaction_response(&ctx, |edit|{
+                edit.content("Word Not Found")
+            }).await.unwrap();
             return;
         }
     };
-
-    let w = &word_res[0];
+    
     let mut embed = CreateEmbed::default();
-    embed.title(&w.word);
-    embed.description(&w.phonetic);
-    for m in w.meanings.iter() {
-        embed.field(
-            m.partofspeach
-                .clone()
-                .unwrap_or_else(|| String::from("Definition")),
-            &m.definitions[0].definition,
-            true,
-        );
-    }
-    match w.sourceUrl.clone() {
-        Some(v_s) => match v_s.first() {
-            Some(url) => {
-                let _ = embed.field("source", url.clone(), false);
-            }
-            None => {}
-        },
-        None => {}
-    };
+    embed.title(&word);
+    embed.description(def);
+    embed.color(641757);
 
     command
         .edit_original_interaction_response(&ctx, |edit| edit.add_embed(embed))
@@ -98,62 +83,13 @@ async fn dictionary_run(ctx: &Context, command: &ApplicationCommandInteraction) 
         .unwrap();
 }
 
-type DictionaryResult = Vec<DictionaryWord>;
-
-#[derive(Debug, Serialize, Deserialize)]
-struct DictionaryWord {
-    meanings: Vec<Meaning>,
-    origin: Option<String>,
-    phonetic: String,
-    phonetics: Vec<Phonetic>,
-
-    #[allow(non_snake_case)]
-    sourceUrl: Option<Vec<String>>,
-
-    word: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Phonetic {
-    text: String,
-    audio: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Definition {
-    definition: String,
-    example: Option<String>,
-    synonyms: Vec<String>,
-    antonyms: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Meaning {
-    partofspeach: Option<String>,
-    definitions: Vec<Definition>,
-}
-
-const BASE_DICTIONARY_API_URL: &str = "https://api.dictionaryapi.dev/api/v2/entries/en/";
-
-async fn get_word(word: &String) -> Result<DictionaryResult, reqwest::Error> {
-    let fetch_url = format!("{}{}", BASE_DICTIONARY_API_URL, word);
-    let response = match reqwest::get(fetch_url).await {
-        Ok(res) => res,
-        Err(why) => return Err(why),
-    };
-
-    response.json::<DictionaryResult>().await
-}
 
 #[cfg(test)]
-mod tests {
-    use super::get_word;
-
+mod tests{
     #[test]
-    fn test_dictionary_api() {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let word = String::from("cactus");
-        let res = rt.block_on(get_word(&word));
-        println!("{:?}", res);
+    fn test_dictionary(){
+        let word = "clover";
+        let def = webster::dictionary(word).unwrap();
+        println!("Found:\n {def}");
     }
 }
