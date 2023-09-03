@@ -2,7 +2,8 @@
 
 #### The Official discord bot for a certain discord server
 ---
-
+!! Depricated
+---
 
 ## Instructions 
 

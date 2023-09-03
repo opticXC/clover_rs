@@ -1,5 +1,5 @@
 [build]
-rustflags = ["-C" , "target-feature=+crt-static"]
+# rustflags = ["-C" , "target-feature=+crt-static"]
 linker = "rust-lld"
 
 [profile.dev]
